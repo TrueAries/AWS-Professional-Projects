@@ -2,7 +2,8 @@
 
 # Project: Single Sign On
 **Date:** July 2025  
-**Tech Stack:**  SAML 2.0 
+**Tech Stack:**  SAML 2.0  
+
 **Status:** Completed
 
 <img width="1202" height="657" alt="Screenshot 2025-07-12 231947" src="https://github.com/user-attachments/assets/2f83c7db-df2a-4698-b311-2433c418c363" />
