@@ -6,7 +6,7 @@ This project demonstrates how to implement AWS Cognito User Pools and Identity P
 
 ## Architecture Overview
 
-<img width="1200" height="671" alt="image" src="https://github.com/user-attachments/assets/9d8268e7-670b-4260-be5b-7e2f946f0ed2" />
+<img width="1200" height="671" alt="image" src="https://github.com/user-attachments/assets/80746cce-cb16-48b5-bfa9-431e861d1782" />
 
 
 Amazon Cognito provides:
@@ -36,7 +36,7 @@ Amazon Cognito provides:
 
 ### User Pools vs Identity Pools
 
-<img width="1203" height="675" alt="image" src="https://github.com/user-attachments/assets/79f320a7-8d92-4599-98d4-653a8d4e2bcd" />
+<img width="1203" height="675" alt="image" src="https://github.com/user-attachments/assets/3d97e7ea-4579-4e63-8aac-e334a22e367e" />
 
 
 **User Pools**:
@@ -46,7 +46,7 @@ Amazon Cognito provides:
 - Include MFA and other security features
 - Tokens can be used for API access via Lambda Custom Authorizers or API Gateway
 
-<img width="1194" height="675" alt="image" src="https://github.com/user-attachments/assets/6e2f4ee7-678d-4fcd-ac0e-d8d844855d0f" />
+<img width="1194" height="675" alt="image" src="https://github.com/user-attachments/assets/3907d1ce-1f96-4f61-aabe-5dd061b38f22" />
 
 
 **Identity Pools**:
@@ -55,7 +55,8 @@ Amazon Cognito provides:
 - Work with external identity providers or Cognito User Pools
 - Enable direct access to AWS services with proper IAM permissions
 
-<img width="1203" height="683" alt="image" src="https://github.com/user-attachments/assets/0e539b14-0482-413d-892f-3d95f1933dee" />
+<img width="1203" height="683" alt="image" src="https://github.com/user-attachments/assets/0859e4ec-4a2b-4f62-8b3e-ee849dbc46dc" />
+
 
 **Combined Usage**:
 - User Pools handle authentication and social sign-in
@@ -64,7 +65,7 @@ Amazon Cognito provides:
 
 ## Advanced Implementation Flow
 
-<img width="1203" height="676" alt="image" src="https://github.com/user-attachments/assets/9566244b-45f3-4674-ab58-83e8c3ee6c67" />
+<img width="1203" height="676" alt="image" src="https://github.com/user-attachments/assets/79d8631b-44ba-4b18-86fe-61e4094a62ad" />
 
 
 The advanced demo shows a complete Web Identity Federation flow:
@@ -186,17 +187,168 @@ The advanced demo shows a complete Web Identity Federation flow:
 ### STAGE 4: Update App Bucket & Test Application
 
 #### Application Configuration
-1. **Update JavaScript Configuration**:
-   ```javascript
-   // Update these values in your app.js
-   const GOOGLE_CLIENT_ID = 'your-google-client-id';
-   const COGNITO_IDENTITY_POOL_ID = 'your-identity-pool-id';
-   const AWS_REGION = 'your-aws-region';
-   const S3_BUCKET = 'your-app-bucket-name';
-   ```
 
-2. **Deploy Application Files**:
-   - Upload HTML, CSS, and JavaScript files to S3 bucket
+1. **Create Application Files**:
+
+**index.html**:
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>PetIDF Demo</title>
+    <meta name="author" content="acantril">
+    <meta name="google-signin-scope" content="profile email">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.2.19.min.js"></script>
+    <script src="scripts.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+
+    <div id="g_id_onload"
+         data-client_id="REPLACE_ME_GOOGLE_APP_CLIENT_ID"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="onSignIn"
+         data-auto_prompt="false">
+    </div>
+    
+    <div class="g_id_signin" data-type="standard"></div>
+    <p />
+    <div id="viewer"></div>
+    <div id="output"></div>
+    
+  </body>
+</html>
+```
+
+**scripts.js**:
+```javascript
+function onSignIn(googleToken) {
+  // Google have OK'd the sign-in
+  // pass the token into our web app
+  credentialExchange(googleToken);
+}
+
+function credentialExchange(googleToken) {
+  // Create a decoded version of the token so we can print things out
+  console.log("Creating decoded token...");
+  const googleTokenDecoded = parseJwt(googleToken.credential);
+  
+  // Output some details onto the browser console to show the token working
+  console.log("ID: " + googleTokenDecoded.sub);
+  console.log('Full Name: ' + googleTokenDecoded.name);
+  console.log("Email: " + googleTokenDecoded.email);
+  
+  if (googleTokenDecoded['sub']) {
+    
+    // We can't access anything in AWS with a google token...
+    // ... so we need to exchange it using Cognito for AWS credentials
+    console.log("Exchanging Google Token for AWS credentials...");
+    AWS.config.region = 'us-east-1'; 
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+      IdentityPoolId: 'REPLACE_ME_COGNITO_IDENTITY_POOL_ID', // MAKE SURE YOU REPLACE THIS
+      Logins: {
+        'accounts.google.com': googleToken.credential
+      }
+    });
+
+    // Now lets obtain the credentials we just swapped
+    AWS.config.credentials.get(function(err) {
+      if (!err) {
+        console.log('Exchanged to Cognito Identity Id: ' + AWS.config.credentials.identityId);
+        // if we are here, things are working as they should...
+        // ... now lets call a function to access images, generate signed URL's and display
+        accessImages();
+      } else {
+        // if we are here, bad things have happened, so we should error.
+        document.getElementById('output').innerHTML = "<b>YOU ARE NOT AUTHORISED TO QUERY AWS!</b>";
+        console.log('ERROR: ' + err);
+      }
+    });
+
+  } else {
+    console.log('User not logged in!');
+  }
+}
+
+function accessImages() {
+  
+  // Using the temp AWS Credentials, lets connect to S3
+  console.log("Creating Session to S3...");
+  var s3 = new AWS.S3();
+  var params = {
+    Bucket: "REPLACE_ME_NAME_OF_PATCHES_PRIVATE_BUCKET" // MAKE SURE YOU REPLACE THIS
+  }; 
+
+  // If we are here, things are going well, lets list all of the objects in the bucket
+  s3.listObjects(params, function(err, data) {
+    console.log("Listing objects in patchesprivate bucket...");
+    if (err) {
+      document.getElementById('output').innerHTML = "<b>YOU ARE NOT AUTHORISED TO QUERY AWS!</b>";
+      console.log(err, err.stack);
+    } else {
+      console.log('AWS response:');
+      console.log(data);
+      var href = this.request.httpRequest.endpoint.href;
+      var bucketUrl = href + data.Name + '/';
+      
+      // for all of the images in the bucket, we need to generate a signedURL for the object
+      var photos = data.Contents.map(function(photo) {
+        var photoKey = photo.Key;
+        
+        console.log("Generating signedURL for : " + photoKey);
+        var url = s3.getSignedUrl ('getObject', {
+          Bucket: data.Name,
+          Key: photoKey
+        })
+
+        var photoUrl = bucketUrl + encodeURIComponent(photoKey);
+        return getHtml([
+          '<span>',
+            '<div>',
+              '<br/>',
+              '<a href="' + url + '" target="_blank"><img style="width:224px;height:224px;" src="' + url + '"/></a>',
+            '</div>',
+            '<div>',
+              '<span>',
+              '</span>',
+            '</div>',
+          '</span>',
+        ]);
+      });
+
+      // let's take those signedURL's, create a HTML page, and display it in the web browser
+      var htmlTemplate = [ '<div>',   getHtml(photos), '</div>']
+      console.log("Creating and returning html...")
+      document.getElementById('viewer').innerHTML = getHtml(htmlTemplate);
+    }    
+
+  });
+}
+
+// A utility function to create HTML.
+function getHtml(template) {
+  return template.join('\n');
+}
+
+// A utility function to decode the google token
+function parseJwt(token) {
+  var base64Url = token.split('.')[1];
+  var base64 = base64Url.replace('-', '+').replace('_', '/');
+  var plain_token = JSON.parse(window.atob(base64));
+  return plain_token;
+};
+```
+
+2. **Update Configuration Values**:
+   Before deploying, you must replace the following placeholder values:
+   - **In index.html**: Replace `REPLACE_ME_GOOGLE_APP_CLIENT_ID` with your Google Client ID from Stage 2
+   - **In scripts.js**: Replace `REPLACE_ME_COGNITO_IDENTITY_POOL_ID` with your Cognito Identity Pool ID
+   - **In scripts.js**: Replace `REPLACE_ME_NAME_OF_PATCHES_PRIVATE_BUCKET` with your S3 bucket name
+
+3. **Deploy Application Files**:
+   - Upload both `index.html` and `scripts.js` to your S3 bucket
    - Ensure files are publicly readable
    - Test CloudFront distribution access
 
@@ -247,7 +399,43 @@ The advanced demo shows a complete Web Identity Federation flow:
    - Check AWS billing for any remaining resources
    - Ensure no unexpected charges
 
-## Key Concepts Explained
+## Code Walkthrough
+
+### Application Flow Analysis
+
+The demo application consists of two main files that work together to demonstrate Web Identity Federation:
+
+#### index.html Structure
+- **Google Sign-In Integration**: Uses Google's GSI (Google Sign-In) library with popup mode
+- **AWS SDK**: Includes AWS SDK for JavaScript v2 for credential exchange
+- **UI Elements**: Simple interface with sign-in button and content viewers
+
+#### scripts.js Functions
+
+**1. onSignIn(googleToken)**
+- Entry point when Google authentication succeeds
+- Receives the Google JWT token and passes it to credential exchange
+
+**2. credentialExchange(googleToken)**
+- Decodes the Google JWT to extract user information (ID, name, email)
+- Exchanges Google token for AWS temporary credentials using Cognito Identity Pool
+- Handles the core Web Identity Federation process
+
+**3. accessImages()**
+- Uses AWS credentials to connect to S3
+- Lists objects in the private bucket
+- Generates signed URLs for each image
+- Dynamically creates HTML to display the images
+
+**4. Utility Functions**
+- `parseJwt()`: Decodes JWT tokens to readable JSON
+- `getHtml()`: Helps create HTML templates
+
+### Security Model Demonstration
+The application perfectly demonstrates the security model:
+- **Unauthenticated**: Cannot access private S3 objects
+- **Authenticated**: Google sign-in provides temporary AWS credentials
+- **Signed URLs**: Even authenticated users get time-limited access to specific objects
 
 ### Web Identity Federation (WEBIDF)
 Web Identity Federation allows you to create AWS-backed applications without managing AWS credentials directly in your application. Instead, users authenticate with trusted external providers, and AWS provides temporary credentials based on that authentication.
