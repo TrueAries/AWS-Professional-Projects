@@ -6,7 +6,8 @@ This project demonstrates how to implement AWS Cognito User Pools and Identity P
 
 ## Architecture Overview
 
-![Cognito Overview](image1.png)
+<img width="1200" height="671" alt="image" src="https://github.com/user-attachments/assets/9d8268e7-670b-4260-be5b-7e2f946f0ed2" />
+
 
 Amazon Cognito provides:
 - **Authentication, Authorization, and User Management** for web/mobile apps
@@ -35,7 +36,8 @@ Amazon Cognito provides:
 
 ### User Pools vs Identity Pools
 
-![User Pools](image2.png)
+<img width="1203" height="675" alt="image" src="https://github.com/user-attachments/assets/79f320a7-8d92-4599-98d4-653a8d4e2bcd" />
+
 
 **User Pools**:
 - Handle user authentication and return JWT tokens
@@ -44,7 +46,8 @@ Amazon Cognito provides:
 - Include MFA and other security features
 - Tokens can be used for API access via Lambda Custom Authorizers or API Gateway
 
-![Identity Pools](image3.png)
+<img width="1194" height="675" alt="image" src="https://github.com/user-attachments/assets/6e2f4ee7-678d-4fcd-ac0e-d8d844855d0f" />
+
 
 **Identity Pools**:
 - Provide access to temporary AWS credentials
@@ -52,7 +55,7 @@ Amazon Cognito provides:
 - Work with external identity providers or Cognito User Pools
 - Enable direct access to AWS services with proper IAM permissions
 
-![Combined Architecture](image4.png)
+<img width="1203" height="683" alt="image" src="https://github.com/user-attachments/assets/0e539b14-0482-413d-892f-3d95f1933dee" />
 
 **Combined Usage**:
 - User Pools handle authentication and social sign-in
@@ -61,7 +64,8 @@ Amazon Cognito provides:
 
 ## Advanced Implementation Flow
 
-![Web Identity Federation Flow](image5.png)
+<img width="1203" height="676" alt="image" src="https://github.com/user-attachments/assets/9566244b-45f3-4674-ab58-83e8c3ee6c67" />
+
 
 The advanced demo shows a complete Web Identity Federation flow:
 1. User accesses web application hosted on S3/CloudFront
