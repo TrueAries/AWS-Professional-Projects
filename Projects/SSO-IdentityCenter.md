@@ -6,7 +6,8 @@ This project demonstrates how to implement AWS Single Sign-On (SSO), now called 
 
 ## Architecture Overview
 
-![SSO Architecture](image1.png)
+<img width="1202" height="657" alt="image" src="https://github.com/user-attachments/assets/f365bad5-4115-4c64-92b5-14a973cbd7ab" />
+
 
 The architecture shows:
 - **SSO User Portal**: Central authentication point for users
@@ -43,7 +44,8 @@ The architecture shows:
 
 Permission sets define what level of access users will have when they assume roles in AWS accounts.
 
-![Permission Sets](image3.png)
+<img width="1568" height="346" alt="image" src="https://github.com/user-attachments/assets/a1f697df-69b7-423e-a3f9-7c5eeca59bb6" />
+
 
 1. In AWS Identity Center, navigate to **Permission sets**
 2. Click **Create permission set**
@@ -110,14 +112,16 @@ This configuration means:
 
 ### Step 7: Test SSO Access
 
-![AWS Access Portal](image4.png)
+<img width="1568" height="423" alt="image" src="https://github.com/user-attachments/assets/2c1244d5-a66b-41a8-8293-b73f3ac8d490" />
+
 
 1. Open the AWS Access Portal URL (provided in Identity Center dashboard)
 2. Sign in as Sally using her credentials
 3. You should see the available AWS accounts she has access to
 4. Click on an account to assume the role with billing permissions
 
-![Billing Console](image2.png)
+<img width="1568" height="565" alt="image" src="https://github.com/user-attachments/assets/e0359a59-490d-44c3-9291-5f13d0de5965" />
+
 
 5. Verify that Sally can only access billing-related services and information
 6. Test that she cannot access other AWS services due to permission restrictions
